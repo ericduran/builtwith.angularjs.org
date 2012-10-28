@@ -161,6 +161,7 @@ app.controller('BWAController', function ($scope, $http, $filter) {
     }
 
     $scope.groupToPages();
+    $scope.setCurrentPage();
   };
 
   var itemsPerPage = 5;
@@ -234,17 +235,35 @@ app.controller('BWAController', function ($scope, $http, $filter) {
   $scope.prevPage = function () {
     if ($scope.currentPage > 0) {
       $scope.currentPage--;
+      $scope.pager($scope.currentPage);
     }
   };
 
   $scope.nextPage = function () {
     if ($scope.currentPage < $scope.pagedProjects.length - 1) {
       $scope.currentPage++;
+      $scope.pager($scope.currentPage);
     }
   };
 
   $scope.setPage = function () {
     $scope.currentPage = this.n;
+    $scope.pager($scope.currentPage);
   };
+
+  $scope.pager = function(count) {
+    // Add 1 to offset the 0 count.
+    history.pushState(false, null, '?page=' + (count + 1));
+  }
+
+  $scope.setCurrentPage = function() {
+    var pageCount = 0;
+    if (document.location.search.substr(0, 6) === '?page=') {
+      pageCount = (document.location.search.substr(6, 7) - 1);
+      if (pageCount > 0 && pageCount <= $scope.pagedProjects.length) {
+        $scope.currentPage = pageCount;
+      }
+    }
+  }
 
 });
