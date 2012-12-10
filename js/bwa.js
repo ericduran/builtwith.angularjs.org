@@ -12,7 +12,7 @@ app.directive('bwaProject', function() {
   }
 });
 
-app.controller('BWAController', function ($scope, $http, $filter) {
+app.controller('BWAController', function ($scope, $http, $filter, $location) {
 
   $scope.sortables = [
     {
@@ -48,9 +48,9 @@ app.controller('BWAController', function ($scope, $http, $filter) {
   $scope.lightbox = function (arg) {
     if (typeof arg !== 'undefined') {
       if (arg !== false) {
-        history.pushState(arg, null, 'project/' + arg.id);
+        $location.path('project/' + arg.id);
       } else {
-        history.pushState(false, null, '/');
+        $location.path('/');
       }
       lightbox = arg;
     }
@@ -59,7 +59,7 @@ app.controller('BWAController', function ($scope, $http, $filter) {
 
   $http.get('projects/projects.json').
     success(function (data, status, headers, config) {
-
+      var path = $location.path();
       $scope.projects = data.projects;
 
       // find the featured project
@@ -92,8 +92,8 @@ app.controller('BWAController', function ($scope, $http, $filter) {
       $scope.tags.sort();
       $scope.search();
 
-      if (document.location.pathname.substr(0, 9) === '/project/') {
-        var projectName = document.location.pathname.substr(9);
+      if (path.indexOf('/project/') === 0) {
+        var projectName = path.substr(9);
         data.projects.forEach(function (project) {
           if (project.id === projectName) {
             lightbox = project;
@@ -130,6 +130,15 @@ app.controller('BWAController', function ($scope, $http, $filter) {
   };
 
   $scope.search = function () {
+    $scope.currentPage = 0;
+    var queries = $location.search();
+
+    if (queries.page !== undefined) {
+      // If we have a page in the query params then lets update
+      // the current page.
+      $scope.currentPage = queries.page;
+    }
+
     $scope.filteredProjects = $filter('filter')($scope.projects, function (project) {
       return (searchMatch(project.desc, $scope.query) || searchMatch(project.name, $scope.query)) &&
         hasAllTags(project.tags, $scope.activeTags);
@@ -139,7 +148,6 @@ app.controller('BWAController', function ($scope, $http, $filter) {
       $scope.filteredProjects = $filter('orderBy')($scope.filteredProjects, $scope.sortPrep);
     }
 
-    $scope.currentPage = 0;
     $scope.group();
   };
 
@@ -161,7 +169,6 @@ app.controller('BWAController', function ($scope, $http, $filter) {
     }
 
     $scope.groupToPages();
-    $scope.setCurrentPage();
   };
 
   var itemsPerPage = 5;
@@ -235,35 +242,20 @@ app.controller('BWAController', function ($scope, $http, $filter) {
   $scope.prevPage = function () {
     if ($scope.currentPage > 0) {
       $scope.currentPage--;
-      $scope.pager($scope.currentPage);
+      $location.search({page: $scope.currentPage});
     }
   };
 
   $scope.nextPage = function () {
     if ($scope.currentPage < $scope.pagedProjects.length - 1) {
       $scope.currentPage++;
-      $scope.pager($scope.currentPage);
+      $location.search({page: $scope.currentPage});
     }
   };
 
   $scope.setPage = function () {
     $scope.currentPage = this.n;
-    $scope.pager($scope.currentPage);
+    $location.search({page: $scope.currentPage});
   };
-
-  $scope.pager = function(count) {
-    // Add 1 to offset the 0 count.
-    history.pushState(false, null, '?page=' + (count + 1));
-  }
-
-  $scope.setCurrentPage = function() {
-    var pageCount = 0;
-    if (document.location.search.substr(0, 6) === '?page=') {
-      pageCount = (document.location.search.substr(6, 7) - 1);
-      if (pageCount > 0 && pageCount <= $scope.pagedProjects.length) {
-        $scope.currentPage = pageCount;
-      }
-    }
-  }
 
 });
