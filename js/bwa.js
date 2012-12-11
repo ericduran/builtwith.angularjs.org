@@ -13,6 +13,7 @@ app.directive('bwaProject', function() {
 });
 
 app.controller('BWAController', function ($scope, $http, $filter, $location) {
+  $scope.$location = $location;
 
   $scope.sortables = [
     {
@@ -33,6 +34,14 @@ app.controller('BWAController', function ($scope, $http, $filter, $location) {
     }
   ];
   $scope.sortPrep = 'none';
+
+  $scope.$watch('$location.search()', function(queries) {
+    if (queries.page !== undefined) {
+      // If we have a page in the query params then lets update
+      // the current page.
+      $scope.currentPage = queries.page;
+    }
+  });
 
   var lightbox = false;
   window.onpopstate = function (ev) {
